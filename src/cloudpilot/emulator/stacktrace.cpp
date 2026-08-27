@@ -27,7 +27,9 @@
 
 #include <cxxabi.h>    // for __cxa_demangle
 #include <dlfcn.h>     // for dladdr
-#include <execinfo.h>  // for backtrace
+#if defined(__GLIBC__) || defined(__APPLE__)
+    #include <execinfo.h>  // for backtrace
+#endif
 
 #include <cstdio>
 #include <cstdlib>
@@ -36,6 +38,7 @@
 
 // This function produces a stack backtrace with demangled function & method names.
 std::string Backtrace(int skip = 1) {
+#if defined(__GLIBC__) || defined(__APPLE__)
     void *callstack[128];
     const int nMaxFrames = sizeof(callstack) / sizeof(callstack[0]);
     char buf[1024];
@@ -69,4 +72,7 @@ std::string Backtrace(int skip = 1) {
     if (nFrames == nMaxFrames) trace_buf << "[truncated]\n";
 
     return trace_buf.str();
+#else
+    //TODO: write a backtrace equivalent for cygwin
+#endif
 }

@@ -102,7 +102,9 @@ void GdbStub::Listen() {
     listenSock = newSock;
     int optVal = 1;
     withRetry(setsockopt, listenSock, SOL_SOCKET, SO_REUSEADDR, &optVal, sizeof(optVal));
-    withRetry(setsockopt, listenSock, SOL_SOCKET, SO_REUSEPORT, &optVal, sizeof(optVal));
+    #if defined(SO_REUSEPORT) && !defined(__CYGWIN__)
+        withRetry(setsockopt, listenSock, SOL_SOCKET, SO_REUSEPORT, &optVal, sizeof(optVal));
+    #endif
 
     if (withRetry(::bind, listenSock, (struct sockaddr*)&sa, sizeof(sa)) == -1) {
         std::cerr << "gdb socket bind failed: " << errno << endl << flush;

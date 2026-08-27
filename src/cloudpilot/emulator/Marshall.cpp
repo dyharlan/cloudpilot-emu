@@ -6,6 +6,11 @@
     #include <arpa/inet.h>
 #endif
 
+#ifdef __CYGWIN__
+    #include <arpa/inet.h>
+    #include <netinet/in.h>
+#endif
+
 void Marshal::GetPointType(emuptr p, PointType& dest) {
     memset(&dest, 0, sizeof(PointType));
 

@@ -6,6 +6,11 @@
     #include <arpa/inet.h>
 #endif
 
+#ifdef __CYGWIN__
+    #include <arpa/inet.h>
+    #include <netinet/in.h>
+#endif
+
 #include "EmMemory.h"
 #include "EmSubroutine.h"
 #include "Logging.h"

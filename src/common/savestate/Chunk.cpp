@@ -4,6 +4,9 @@
 
 #include "CPEndian.h"
 #include "Logging.h"
+#ifdef __CYGWIN__
+    #include <alloca.h>
+#endif
 
 using namespace std;
 

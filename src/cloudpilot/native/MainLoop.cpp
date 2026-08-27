@@ -1,7 +1,9 @@
 #include "MainLoop.h"
 
 #include <SDL_image.h>
-
+#ifdef __CYGWIN__
+    #include <cstring>
+#endif
 #include "Debugger.h"
 #include "EmHAL.h"
 #include "EmSession.h"

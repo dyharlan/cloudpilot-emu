@@ -25,7 +25,7 @@ bool VfsCli::Run() {
     unique_ptr<uint8_t[]> data;
 
     {
-        fstream stream(imageFile, ios_base::in);
+        fstream stream(imageFile, ios_base::in | ios_base::binary);
         if (stream.fail()) {
             cout << "unable to open '" << imageFile << "'" << endl;
             return false;

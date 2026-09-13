@@ -16,8 +16,13 @@ uint64_t palmEpochSeconds() {
         struct tm loc;
         localtime_r(&now, &loc);
 
+#ifdef _WIN32
+        _tzset();
+        tzoffset = -(_timezone + (loc.tm_isdst > 0 ? _dstbias : 0));
+#else
         // This is not super portable, but it will do for now.
         tzoffset = loc.tm_gmtoff;
+#endif
         lastUpdate = now;
     }
 

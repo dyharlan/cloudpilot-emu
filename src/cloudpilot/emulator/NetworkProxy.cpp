@@ -1,20 +1,18 @@
-#include "NetworkProxy.h"
-
-#include <memory>
-
 #ifdef __linux__
     #include <arpa/inet.h>
-#endif
-
-#ifdef __CYGWIN__
+#elif defined(_WIN32)
+    #include <winsock2.h>
+#elif defined(__CYGWIN__)
     #include <arpa/inet.h>
     #include <netinet/in.h>
 #endif
 
+#include <memory>
+
 #include "EmMemory.h"
-#include "EmSubroutine.h"
 #include "Logging.h"
 #include "Marshal.h"
+#include "NetworkProxy.h"
 #include "SuspendContextNetworkConnect.h"
 #include "SuspendContextNetworkRpc.h"
 #include "SuspendManager.h"

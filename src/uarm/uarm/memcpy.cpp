@@ -56,8 +56,8 @@ namespace {
         result->ok = true;
         result->wasWrite = write;
 
-        uint8_t align = __builtin_ctz(static_cast<unsigned long>(arm) |
-                                      reinterpret_cast<unsigned long>(host) | 0x08);
+        uint8_t align = __builtin_ctz(static_cast<uintptr_t>(arm) |
+                                      reinterpret_cast<uintptr_t>(host) | 0x08);
 
         while (size > 0) {
             MMUTranslateResult translateResult = mmuTranslate(mmu, arm, privileged, write);
@@ -111,8 +111,8 @@ namespace {
         result->ok = true;
         result->wasWrite = write;
 
-        uint8_t align = __builtin_ctz(static_cast<unsigned long>(arm) |
-                                      reinterpret_cast<unsigned long>(host) | 0x08);
+        uint8_t align = __builtin_ctz(static_cast<uintptr_t>(arm) |
+                                      reinterpret_cast<uintptr_t>(host) | 0x08);
 
         while (size > 0) {
             if (!MPU_TEST_RESULT_OK(mpuTestAddress(mpu, arm, privileged, write))) {

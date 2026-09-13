@@ -146,7 +146,7 @@ OBJECTS_EXTRA_NATIVE = ../common/libcommon.a
 OBJECTS_EXTRA_TEST = ../common/libcommon.a
 OBJECTS_EXTRA_EMCC = ../common/libcommon-wasm.a
 
-BINARY_NATIVE = cp-uarm
+BINARY_NATIVE = cp-uarm$(EXE_SUFFIX)
 BINARY_EMCC = uarm_web.wasm
 BINARY_TEST = test/test
 

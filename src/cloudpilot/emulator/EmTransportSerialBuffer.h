@@ -1,9 +1,9 @@
 #ifndef _EM_TRANSPORT_SERIAL_BUFFER_H_
 #define _EM_TRANSPORT_SERIAL_BUFFER_H_
 
+#include <cstdint>
 #include <memory>
 
-#include "EmCommon.h"
 #include "EmTransportSerial.h"
 #include "Fifo.h"
 
@@ -59,7 +59,7 @@ class EmTransportSerialBuffer : public EmTransportSerial {
     void SetModeSync(bool modeSync);
 
     bool IsFrameComplete();
-    void SetRequestTransferCallback(long cb);
+    void SetRequestTransferCallback(uintptr_t cb);
 
    private:
     const size_t bufferSize;

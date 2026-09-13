@@ -137,7 +137,7 @@ void StackDump::Dump() const {
     }
 
     if (!ramfile.empty() && !wroteRam) {
-        fstream stream(ramfile, ios_base::out);
+        fstream stream(ramfile, ios_base::out | ios_base::binary);
 
         size_t memorySize = EmMemory::GetRegionSize(MemoryRegion::ram);
         unique_ptr<uint8[]> memory = make_unique<uint8[]>(memorySize);

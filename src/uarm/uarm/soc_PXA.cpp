@@ -308,6 +308,8 @@ void SocPXA::OnSdInsert() {
     deviceSetSdCardInserted(dev, true);
 }
 
+void SocPXA::OnSdRemount() { pxaMmcInsert(mmc, vSD); }
+
 void SocPXA::OnSdEject() {
     vsdReset(vSD, 0);
     pxaMmcInsert(mmc, nullptr);

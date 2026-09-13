@@ -469,12 +469,12 @@ class PAS {
                                                                                                    \
     template <class A>                                                                             \
     INLINE_ EmAlias##type<A> EmAlias##type<A>::operator[](int index) {                             \
-        return EmAlias##type<A>((ptr_type)(((long)this->GetPtr()) + index * this->GetSize()));     \
+        return EmAlias##type<A>((ptr_type)(((uintptr_t)this->GetPtr()) + index * this->GetSize()));     \
     }                                                                                              \
                                                                                                    \
     template <class A>                                                                             \
     INLINE_ const EmAlias##type<A> EmAlias##type<A>::operator[](int index) const {                 \
-        return EmAlias##type<A>((ptr_type)(((long)this->GetPtr()) + index * this->GetSize()));     \
+        return EmAlias##type<A>((ptr_type)(((uintptr_t)this->GetPtr()) + index * this->GetSize()));     \
     }
 
 #define DEFINE_SCALAR_PROXY(type, asType)                                                        \
@@ -507,11 +507,11 @@ class PAS {
     }                                                                                            \
                                                                                                  \
     INLINE_ EmAlias##type<LAS> EmProxy##type::operator[](int index) {                            \
-        return EmAlias##type<LAS>((ptr_type)(((long)this->GetPtr()) + index * this->GetSize())); \
+        return EmAlias##type<LAS>((ptr_type)(((uintptr_t)this->GetPtr()) + index * this->GetSize())); \
     }                                                                                            \
                                                                                                  \
     INLINE_ const EmAlias##type<LAS> EmProxy##type::operator[](int index) const {                \
-        return EmAlias##type<LAS>((ptr_type)(((long)this->GetPtr()) + index * this->GetSize())); \
+        return EmAlias##type<LAS>((ptr_type)(((uintptr_t)this->GetPtr()) + index * this->GetSize())); \
     }
 
 #define DEFINE_SCALAR_CLASSES(type, asType) \
@@ -525,11 +525,11 @@ class PAS {
     template <class A>                                                    \
     INLINE_ EmAlias##type<A>& EmAlias##type<A>::operator=(rhs_type val) { \
         if (sizeof(asType) == 1)                                          \
-            A::PutByte(this->GetPtr(), (unsigned char)(asType)(long)val); \
+            A::PutByte(this->GetPtr(), (unsigned char)(asType)(uintptr_t)val); \
         else if (sizeof(asType) == 2)                                     \
-            A::PutWord(this->GetPtr(), (UInt16)(asType)(long)val);        \
+            A::PutWord(this->GetPtr(), (UInt16)(asType)(uintptr_t)val);        \
         else if (sizeof(asType) == 4)                                     \
-            A::PutLong(this->GetPtr(), (UInt32)(asType)(long)val);        \
+            A::PutLong(this->GetPtr(), (UInt32)(asType)(uintptr_t)val);        \
         else                                                              \
             BadSetter();                                                  \
                                                                           \
@@ -540,11 +540,11 @@ class PAS {
                                                                             \
     INLINE_ EmProxy##type& EmProxy##type::operator=(rhs_type val) {         \
         if (sizeof(asType) == 1)                                            \
-            LAS::PutByte(this->GetPtr(), (unsigned char)(asType)(long)val); \
+            LAS::PutByte(this->GetPtr(), (unsigned char)(asType)(uintptr_t)val); \
         else if (sizeof(asType) == 2)                                       \
-            LAS::PutWord(this->GetPtr(), (UInt16)(asType)(long)val);        \
+            LAS::PutWord(this->GetPtr(), (UInt16)(asType)(uintptr_t)val);        \
         else if (sizeof(asType) == 4)                                       \
-            LAS::PutLong(this->GetPtr(), (UInt32)(asType)(long)val);        \
+            LAS::PutLong(this->GetPtr(), (UInt32)(asType)(uintptr_t)val);        \
         else                                                                \
             BadSetter();                                                    \
                                                                             \
@@ -639,12 +639,12 @@ class PAS {
                                                                                                \
     template <class A>                                                                         \
     INLINE_ EmAlias##type<A> EmAlias##type<A>::operator[](int index) {                         \
-        return EmAlias##type<A>((ptr_type)(((long)this->GetPtr()) + index * this->GetSize())); \
+        return EmAlias##type<A>((ptr_type)(((uintptr_t)this->GetPtr()) + index * this->GetSize())); \
     }                                                                                          \
                                                                                                \
     template <class A>                                                                         \
     INLINE_ const EmAlias##type<A> EmAlias##type<A>::operator[](int index) const {             \
-        return EmAlias##type<A>((ptr_type)(((long)this->GetPtr()) + index * this->GetSize())); \
+        return EmAlias##type<A>((ptr_type)(((uintptr_t)this->GetPtr()) + index * this->GetSize())); \
     }
 
 #define DEFINE_STRUCT_PROXY(type, size, FOR_EACH_FIELD)                                          \
@@ -666,11 +666,11 @@ class PAS {
     }                                                                                            \
                                                                                                  \
     INLINE_ EmAlias##type<LAS> EmProxy##type::operator[](int index) {                            \
-        return EmAlias##type<LAS>((ptr_type)(((long)this->GetPtr()) + index * this->GetSize())); \
+        return EmAlias##type<LAS>((ptr_type)(((uintptr_t)this->GetPtr()) + index * this->GetSize())); \
     }                                                                                            \
                                                                                                  \
     INLINE_ const EmAlias##type<LAS> EmProxy##type::operator[](int index) const {                \
-        return EmAlias##type<LAS>((ptr_type)(((long)this->GetPtr()) + index * this->GetSize())); \
+        return EmAlias##type<LAS>((ptr_type)(((uintptr_t)this->GetPtr()) + index * this->GetSize())); \
     }
 
 #define DEFINE_STRUCT_CLASSES(type, size, FOR_EACH_FIELD) \
@@ -694,11 +694,11 @@ class PAS {
 
 #define MAKE_MEMBER_INITIALIZER_ALIAS(field_offset, field_type, field_name) \
                                                                             \
-    , field_name((ptr_type)(((long)fPtr) + field_offset))
+    , field_name((ptr_type)(((uintptr_t)fPtr) + field_offset))
 
 #define MAKE_MEMBER_INITIALIZER_PROXY(field_offset, field_type, field_name) \
                                                                             \
-    , field_name((ptr_type)(((long)this->GetPtr()) + field_offset))
+    , field_name((ptr_type)(((uintptr_t)this->GetPtr()) + field_offset))
 
 typedef uint8 UIOptionsType;
 typedef uint8 ScrOperation;

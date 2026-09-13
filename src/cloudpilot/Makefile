@@ -219,7 +219,7 @@ OBJECTS_EXTRA_NATIVE = ../common/libcommon.a
 OBJECTS_EXTRA_TEST = ../common/libcommon.a
 OBJECTS_EXTRA_EMCC = ../common/libcommon-wasm.a ../skins/libskin-wasm.a
 
-BINARY_NATIVE = cloudpilot-emu
+BINARY_NATIVE = cloudpilot-emu$(EXE_SUFFIX)
 BINARY_EMCC = cloudpilot_web.wasm
 BINARY_TEST = test/test
 

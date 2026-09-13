@@ -187,6 +187,8 @@ void SocPV::OnSetPcmSuspended() {
 
 void SocPV::OnSdInsert() { pvStorageInsert(storage); }
 
+void SocPV::OnSdRemount() {}
+
 void SocPV::OnSdEject() { pvStorageEject(storage); }
 
 void SocPV::OnTouch(int x, int y) { pvTouchUpdate(touch, x, y); }

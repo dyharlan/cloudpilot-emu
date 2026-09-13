@@ -61,6 +61,7 @@ class SocPXA : public SocGeneric<SocPXA> {
     void OnSetPcmOutputEnabled() override;
     void OnSetPcmSuspended() override;
     void OnSdInsert() override;
+    void OnSdRemount() override;
     void OnSdEject() override;
 
     void OnTouch(int x, int y);

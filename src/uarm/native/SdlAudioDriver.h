@@ -11,6 +11,7 @@ struct AudioQueue;
 class SdlAudioDriver {
    public:
     SdlAudioDriver(SoC* soc, AudioQueue* audioQueue);
+    ~SdlAudioDriver();
 
     void Start();
     void Pause();

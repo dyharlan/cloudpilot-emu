@@ -1,6 +1,7 @@
 #ifndef _RECURSIVE_FS_ITERATOR_H_
 #define _RECURSIVE_FS_ITERATOR_H_
 
+#include <cstdint>
 #include <functional>
 #include <string>
 #include <vector>

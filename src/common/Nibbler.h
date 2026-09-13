@@ -13,7 +13,7 @@ class Nibbler {
         next = row + offset / nibblesPerByte;
 
         if constexpr (wordswap)
-            current = *((uint8_t*)((long)(next++) ^ 1l));
+            current = *((uint8_t*)((uintptr_t)(next++) ^ 1));
         else
             current = *(next++);
 
@@ -26,7 +26,7 @@ class Nibbler {
     [[gnu::always_inline]] inline uint8_t nibble() {
         if (nextNibble >= nibblesPerByte) {
             if constexpr (wordswap)
-                current = *((uint8_t*)((long)(next++) ^ 1l));
+                current = *((uint8_t*)((uintptr_t)(next++) ^ 1));
             else
                 current = *(next++);
 

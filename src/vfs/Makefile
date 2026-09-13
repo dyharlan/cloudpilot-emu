@@ -56,7 +56,7 @@ OBJECTS_EXTRA_NATIVE = ../common/libcommon.a
 OBJECTS_EXTRA_TEST = ../common/libcommon.a
 OBJECTS_EXTRA_EMCC = ../common/libcommon-wasm.a
 
-BINARY_NATIVE = vfs
+BINARY_NATIVE = vfs$(EXE_SUFFIX)
 BINARY_EMCC = vfs_web.wasm
 BINARY_TEST = test/test
 

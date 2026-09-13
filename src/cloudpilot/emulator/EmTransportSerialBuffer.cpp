@@ -1,5 +1,7 @@
 #include "EmTransportSerialBuffer.h"
 
+#include <cstdint>
+
 #include "EmUARTDragonball.h"
 #include "SuspendContextSerialSync.h"
 #include "SuspendManager.h"
@@ -217,6 +219,6 @@ bool EmTransportSerialBuffer::IsFrameComplete() {
     return !modeSync || transactionState != TransactionState::sending;
 }
 
-void EmTransportSerialBuffer::SetRequestTransferCallback(long cb) {
+void EmTransportSerialBuffer::SetRequestTransferCallback(uintptr_t cb) {
     requestTransferCallback = (request_transfer_callback_ptr)cb;
 }

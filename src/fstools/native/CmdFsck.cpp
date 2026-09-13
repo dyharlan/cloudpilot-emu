@@ -20,7 +20,7 @@ bool CmdFsk::Run() {
     size_t len;
 
     {
-        fstream stream(imageFile, ios_base::in);
+        fstream stream(imageFile, ios_base::in | ios_base::binary);
         if (stream.fail()) {
             cout << "unable to open '" << imageFile << "'" << endl;
             return false;
@@ -75,7 +75,7 @@ bool CmdFsk::Run() {
          << flush;
 
     if (!writeFile.empty()) {
-        fstream stream(writeFile, ios_base::out);
+        fstream stream(writeFile, ios_base::out | ios_base::binary);
         if (stream.fail()) {
             cout << "failed to open " << writeFile << endl;
             return false;

@@ -682,7 +682,7 @@ namespace {
 // in emulated space.
 
 #define mq_addressof(x)                                                       \
-    (static_cast<emuptr>(((long)fRegs.x.GetPtr()) - ((long)fRegs.GetPtr())) + \
+    (static_cast<emuptr>(((uintptr_t)fRegs.x.GetPtr()) - ((uintptr_t)fRegs.GetPtr())) + \
      ((emuptr)this->GetAddressStart()))
 
 // Macro to help the installation of handlers for a register.

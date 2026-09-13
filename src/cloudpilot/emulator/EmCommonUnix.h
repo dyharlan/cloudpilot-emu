@@ -36,27 +36,27 @@
 // as EmCommon.h is the basis for the precompiled header files,
 // which load in quickly even with lots of extra stuff in them.
 
-//#include <ctype.h>				// isalpha, tolower
-//#include <stdarg.h>
-//#include <stddef.h>
-//#include <stdio.h>
-//#include <stdlib.h>
-//#include <string.h>
+// #include <ctype.h>				// isalpha, tolower
+// #include <stdarg.h>
+// #include <stddef.h>
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <string.h>
 
-//#include <sys/types.h>
-//#include <sys/socket.h>
-//#include <sys/ioctl.h>
-//#include <netinet/in.h>
-//#include <netinet/tcp.h>
-//#include <netdb.h>
+// #include <sys/types.h>
+// #include <sys/socket.h>
+// #include <sys/ioctl.h>
+// #include <netinet/in.h>
+// #include <netinet/tcp.h>
+// #include <netdb.h>
 
-//#include <algorithm>			// find, sort
-//#include <deque>				// deque
-//#include <list>					// list
-//#include <string>				// list
-//#include <utility>				// pair
-//#include <vector>
-//#include <map>
+// #include <algorithm>			// find, sort
+// #include <deque>				// deque
+// #include <list>					// list
+// #include <string>				// list
+// #include <utility>				// pair
+// #include <vector>
+// #include <map>
 
 #define down fl_down  // "down" defined both in WindowNew.h and Fl/Enumerations.h
 
@@ -66,21 +66,5 @@
 
 // #include <sys/socket.h>  // socklen_t
 #include <sys/types.h>
-
-#if defined(NO_TYPE_SOCKLEN_T)
-typedef int socklen_t;  // not defined in <sys/socket.h> on solaris or FreeBSD
-#endif
-
-typedef int SOCKET;
-
-#define WSAEINVAL EINVAL
-#define INVALID_SOCKET ((SOCKET)(~0))
-#define SOCKET_ERROR (-1)
-#define closesocket close
-#define ioctlsocket ioctl
-
-#ifndef INADDR_LOOPBACK
-    #define INADDR_LOOPBACK 0x7f000001
-#endif
 
 #endif /* EmUnixCommon_h */

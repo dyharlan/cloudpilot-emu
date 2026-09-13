@@ -311,7 +311,7 @@ bool EmRegsSED1375::CopyLCDFrame(Frame& frame, bool fullRefresh) {
 
             for (uint32 y = frame.firstDirtyLine; y <= frame.lastDirtyLine; y++)
                 for (int32 x = 0; x < width; x++)
-                    *(buffer++) = fClutData[*(uint8*)((long)(fbuf++) ^ 1)];
+                    *(buffer++) = fClutData[*(uint8*)((uintptr_t)(fbuf++) ^ 1)];
 
             return true;
         }

@@ -230,7 +230,7 @@ bool MediaQFramebuffer<T>::DecodeFrame(Frame& frame, uint32 rowBytes, uint32 bpp
                     // Pixels are arranged in LE words in the framebuffer, so byteswap
                     UpdatePixel<flipX, flipY, swapXY>(
                         destBuffer, frame, x, y,
-                        static_cast<T*>(this)->palette[*(uint8*)((long)(srcBuffer++) ^ 1)]);
+                        static_cast<T*>(this)->palette[*(uint8*)((uintptr_t)(srcBuffer++) ^ 1)]);
 
                 if constexpr (!trivialPitch) srcBuffer += pitchDelta;
             }
@@ -245,8 +245,8 @@ bool MediaQFramebuffer<T>::DecodeFrame(Frame& frame, uint32 rowBytes, uint32 bpp
             for (uint32 y = firstLine; y <= lastLine; y++) {
                 for (uint32 x = 0; x < lineWidth; x++) {
                     // Pixel data is LE, so byteswap
-                    uint8 p1 = *(uint8*)((long)(srcBuffer++) ^ 1);  // GGGBBBBB
-                    uint8 p2 = *(uint8*)((long)(srcBuffer++) ^ 1);  // RRRRRGGG
+                    uint8 p1 = *(uint8*)((uintptr_t)(srcBuffer++) ^ 1);  // GGGBBBBB
+                    uint8 p2 = *(uint8*)((uintptr_t)(srcBuffer++) ^ 1);  // RRRRRGGG
 
                     // Merge the two together so that we get RRRRRGGG GGGBBBBB
 

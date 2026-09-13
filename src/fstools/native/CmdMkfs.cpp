@@ -43,7 +43,7 @@ bool CmdMkfs::Run() {
     cout << endl;
 
     {
-        fstream stream(imageFile, ios_base::out);
+        fstream stream(imageFile, ios_base::out | ios_base::binary);
         if (stream.fail()) {
             cout << "failed to open " << imageFile << endl;
             return false;

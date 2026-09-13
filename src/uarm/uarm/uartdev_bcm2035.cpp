@@ -7,24 +7,26 @@
 
 #define SAVESTATE_VERSION 0
 
-constexpr uint8_t CMD_ENTER_UPLOAD[] = {0x01, 0x2e, 0xfc, 0x00};
-constexpr uint8_t CMD_ENTER_UPLOAD_RESPONSE[] = {0x04, 0x0e, 0x04, 0x01, 0x2e, 0xfc, 0x00};
-constexpr uint8_t INVALID_ACK_UPLOAD_MODE_RESPONSE[] = {0xff, 0xff};
+namespace {
+    constexpr uint8_t CMD_ENTER_UPLOAD[] = {0x01, 0x2e, 0xfc, 0x00};
+    constexpr uint8_t CMD_ENTER_UPLOAD_RESPONSE[] = {0x04, 0x0e, 0x04, 0x01, 0x2e, 0xfc, 0x00};
+    constexpr uint8_t INVALID_ACK_UPLOAD_MODE_RESPONSE[] = {0xff, 0xff};
 
-constexpr uint64_t CMD_ENTER_UPLOAD_RESPONSE_DELAY = 10_msec;
-constexpr uint64_t ACK_UPLOAD_MODE_DELAY = 150_msec;
-constexpr uint64_t WAIT_FOR_RECEIVE_ACK = 150_msec;
+    constexpr uint64_t CMD_ENTER_UPLOAD_RESPONSE_DELAY = 10_msec;
+    constexpr uint64_t ACK_UPLOAD_MODE_DELAY = 150_msec;
+    constexpr uint64_t WAIT_FOR_RECEIVE_ACK = 150_msec;
 
-enum class State : uint8_t {
-    receiveUploadCmd,
-    waitForSendCmdEnterUploadResponse,
-    sendCmdUploadResponse,
-    waitForSendAckUploadMode,
-    sendAckUploadMode,
-    waitForReceiveAckDelay
-};
+    enum class State : uint8_t {
+        receiveUploadCmd,
+        waitForSendCmdEnterUploadResponse,
+        sendCmdUploadResponse,
+        waitForSendAckUploadMode,
+        sendAckUploadMode,
+        waitForReceiveAckDelay
+    };
 
-enum class Mode : uint8_t { send, receive, wait };
+    enum class Mode : uint8_t { send, receive, wait };
+}  // namespace
 
 struct Bcm2035 {
     GetEmuTime getTime;

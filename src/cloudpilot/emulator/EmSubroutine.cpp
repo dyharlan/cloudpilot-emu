@@ -2270,7 +2270,7 @@ Bool EmSubroutineCPU68K::HandleTrap12(ExceptionNumber) {
 char* EmSubroutineCPU68K::GetStackBase() {
     // Ensure that the stack is aligned to a longword address.
 
-    long stackBase = (long)fStack;
+    uintptr_t stackBase = (uintptr_t)fStack;
 
     stackBase += 3;
     stackBase &= ~3;

@@ -1,6 +1,7 @@
 #include "Miscellaneous.h"
 
 #include <algorithm>
+#include <cstdint>
 
 #include "Byteswapping.h"
 #include "EmBankMapped.h"
@@ -589,7 +590,7 @@ void SetHotSyncUserName(const char* userNameP) {
     // Patch up cmdP and map in the buffer it points to.
 
     StMemoryMapper mapper(session.cmdP, session.cmdLen);
-    session.cmdP = (void*)(long)EmBankMapped::GetEmulatedAddress(session.cmdP);
+    session.cmdP = (void*)(uintptr_t)EmBankMapped::GetEmulatedAddress(session.cmdP);
 
     // Finally, install the name.
     DlkDispatchRequest(&session);

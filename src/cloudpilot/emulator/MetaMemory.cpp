@@ -33,7 +33,7 @@ void MetaMemory::MarkRange(emuptr start, emuptr end, uint8 v) {
 
     uint8* startP = EmMemGetMetaAddress(start);
     uint8* endP = startP + (end - start);  // EmMemGetMetaAddress (end);
-    uint8* end4P = (uint8*)(((long)endP) & ~3);
+    uint8* end4P = (uint8*)(((uintptr_t)endP) & ~3);
     uint8* p = startP;
 
     // Guard against memory corruption
@@ -58,7 +58,7 @@ void MetaMemory::MarkRange(emuptr start, emuptr end, uint8 v) {
         longValue |= (longValue << 8);
         longValue |= (longValue << 16);
 
-        while (((long)p) & 3)  // while there are leading bytes
+        while (((uintptr_t)p) & 3)  // while there are leading bytes
         {
             *p++ |= v;
         }
@@ -94,7 +94,7 @@ void MetaMemory::UnmarkRange(emuptr start, emuptr end, uint8 v) {
 
     uint8* startP = EmMemGetMetaAddress(start);
     uint8* endP = startP + (end - start);  // EmMemGetMetaAddress (end);
-    uint8* end4P = (uint8*)(((long)endP) & ~3);
+    uint8* end4P = (uint8*)(((uintptr_t)endP) & ~3);
     uint8* p = startP;
 
     // Guard against memory corruption
@@ -121,7 +121,7 @@ void MetaMemory::UnmarkRange(emuptr start, emuptr end, uint8 v) {
         longValue |= (longValue << 8);
         longValue |= (longValue << 16);
 
-        while (((long)p) & 3)  // while there are leading bytes
+        while (((uintptr_t)p) & 3)  // while there are leading bytes
         {
             *p++ &= v;
         }
@@ -171,7 +171,7 @@ void MetaMemory::MarkUnmarkRange(emuptr start, emuptr end, uint8 andValue, uint8
 
     uint8* startP = EmMemGetMetaAddress(start);
     uint8* endP = startP + (end - start);  // EmMemGetMetaAddress (end);
-    uint8* end4P = (uint8*)(((long)endP) & ~3);
+    uint8* end4P = (uint8*)(((uintptr_t)endP) & ~3);
     uint8* p = startP;
 
     EmAssert(end >= start);
@@ -206,7 +206,7 @@ void MetaMemory::MarkUnmarkRange(emuptr start, emuptr end, uint8 andValue, uint8
             longOr |= (longOr << 8);
             longOr |= (longOr << 16);
 
-            while (((long)p) & 3)  // while there are leading bytes
+            while (((uintptr_t)p) & 3)  // while there are leading bytes
             {
                 *p = (*p & andValue) | orValue;
                 p++;

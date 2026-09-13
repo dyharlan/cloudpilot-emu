@@ -492,7 +492,7 @@ emuptr PrvEnsureAligned(emuptr candidate, const void* addr) {
     // mapped address -- maintains the same alignment as
     // the incoming address.
 
-    while ((candidate & 0x03) != ((long)addr & 0x03)) ++candidate;
+    while ((candidate & 0x03) != ((uintptr_t)addr & 0x03)) ++candidate;
 
     return candidate;
 }

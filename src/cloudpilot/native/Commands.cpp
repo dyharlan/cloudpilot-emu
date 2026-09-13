@@ -98,7 +98,7 @@ namespace {
             return;
         }
 
-        fstream stream(file, ios_base::out);
+        fstream stream(file, ios_base::out | ios_base::binary);
 
         if (stream.fail()) {
             cout << "failed to open " << file << endl << flush;
@@ -118,7 +118,7 @@ namespace {
 
         for (uint32 i = 0; i < size; i++) memory[i] = EmMemGet8(gMemoryStart + i);
 
-        fstream stream(file, ios_base::out);
+        fstream stream(file, ios_base::out | ios_base::binary);
 
         if (stream.fail()) {
             cout << "failed to open " << file << endl << flush;
@@ -157,7 +157,7 @@ namespace {
 
         cout << "saving backup to " << file << endl << flush;
 
-        fstream stream(file, ios_base::out);
+        fstream stream(file, ios_base::out | ios_base::binary);
 
         if (stream.fail()) {
             cout << "failed to open " << file << endl << flush;
@@ -177,7 +177,7 @@ namespace {
 
         auto image = gExternalStorage.GetImageInSlot(slot);
 
-        fstream stream(file, ios_base::out);
+        fstream stream(file, ios_base::out | ios_base::binary);
 
         if (stream.fail()) {
             cout << "failed to open " << file << endl << flush;

@@ -32,7 +32,7 @@ namespace {
     constexpr size_t SIZE_HEADER = 12;  // 4 byte magic + 4 byte version + 4 byte device ID
     constexpr size_t SIZE_TOC = 5 * 4;
 
-    constexpr size_t BUFFER_MAX_SIZE = 128 * 1024 * 1024;
+    constexpr size_t BUFFER_MAX_SIZE = 256 * 1024 * 1024;
     constexpr size_t BUFFER_MIN_SIZE = 1024;
 
     int32_t fallbackDisplayMode(int32_t deviceType) {

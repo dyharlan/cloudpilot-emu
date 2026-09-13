@@ -19,6 +19,8 @@ INCLUDE ?=
 
 EMCC_INITIAL_MEMORY ?= 16777216
 
+EXE_SUFFIX ?=
+
 # The variables below should be defined as necessary
 
 CFLAGS_COMMON ?= -Wextra -Wall

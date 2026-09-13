@@ -1,15 +1,23 @@
+#ifdef _WIN32
+// clang-format off
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+// clang-format on
+#else
+    #include <arpa/inet.h>
+    #include <fcntl.h>
+    #include <netinet/in.h>
+    #include <poll.h>
+    #include <sys/select.h>
+    #include <sys/socket.h>
+    #include <sys/time.h>
+    #include <sys/types.h>
+    #include <unistd.h>
+#endif
+
 #include "GdbStub.h"
 
-#include <arpa/inet.h>
-#include <fcntl.h>
-#include <netinet/in.h>
-#include <poll.h>
-#include <sys/select.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
-
+#include <cerrno>
 #include <cstring>
 #include <iomanip>
 #include <iostream>
@@ -18,6 +26,22 @@
 #include "Defer.h"
 #include "LogDomain.h"
 #include "Logging.h"
+
+#ifdef _WIN32
+    #define poll WSAPoll
+
+    #define SOCK_ERRNO WSAGetLastError()
+
+    #define SOCK_EINTR WSAEINTR
+    #define SOCK_EAGAIN WSAEWOULDBLOCK
+    #define SOCK_EWOULDBLOCK WSAEWOULDBLOCK
+#else
+    #define SOCK_ERRNO errno
+
+    #define SOCK_EINTR EINTR
+    #define SOCK_EAGAIN EAGAIN
+    #define SOCK_EWOULDBLOCK EWOULDBLOCK
+#endif
 
 class EInvalidCommand {};
 
@@ -34,15 +58,29 @@ namespace {
         int result;
         do {
             result = fn(args...);
-        } while (result < 0 && errno == EINTR);
+        } while (result < 0 && SOCK_ERRNO == SOCK_EINTR);
 
         return result;
     }
 
+    int closeSocket(int sock) {
+#ifdef _WIN32
+        return closesocket(sock);
+#else
+        return close(sock);
+#endif
+    }
+
     bool setSocketNonblock(int sock) {
+#ifdef _WIN32
+        u_long mode = 1;
+
+        return ioctlsocket(sock, FIONBIO, &mode) == 0;
+#else
         int flags = withRetry(fcntl, sock, F_GETFL, 0);
 
         return flags >= 0 && withRetry(fcntl, sock, F_SETFL, flags | O_NONBLOCK) >= 0;
+#endif
     }
 
     const char* watchpointCode(Debugger::WatchpointType type) {
@@ -87,32 +125,34 @@ void GdbStub::Listen() {
         .sin_port = htons(listenPort),
     };
 
-    inet_aton("0.0.0.0", (struct in_addr*)&sa.sin_addr.s_addr);
+    sa.sin_addr.s_addr = htonl(INADDR_ANY);
 
     int newSock = withRetry(socket, PF_INET, SOCK_STREAM, 0);
     if (newSock < 0) {
-        std::cerr << "gdb socket creation failed: " << errno << endl << flush;
+        std::cerr << "gdb socket creation failed: " << SOCK_ERRNO << endl << flush;
         return;
     }
 
     Defer cleanupSocket([&]() {
-        if (connectionState != ConnectionState::listening) close(listenSock);
+        if (connectionState != ConnectionState::listening) closeSocket(listenSock);
     });
 
     listenSock = newSock;
     int optVal = 1;
-    withRetry(setsockopt, listenSock, SOL_SOCKET, SO_REUSEADDR, &optVal, sizeof(optVal));
-    #if defined(SO_REUSEPORT) && !defined(__CYGWIN__)
-        withRetry(setsockopt, listenSock, SOL_SOCKET, SO_REUSEPORT, &optVal, sizeof(optVal));
-    #endif
+    withRetry(setsockopt, listenSock, SOL_SOCKET, SO_REUSEADDR, (const char*)&optVal,
+              sizeof(optVal));
+#ifdef SO_REUSEPORT
+    withRetry(setsockopt, listenSock, SOL_SOCKET, SO_REUSEPORT, (const char*)&optVal,
+              sizeof(optVal));
+#endif
 
     if (withRetry(::bind, listenSock, (struct sockaddr*)&sa, sizeof(sa)) == -1) {
-        std::cerr << "gdb socket bind failed: " << errno << endl << flush;
+        std::cerr << "gdb socket bind failed: " << SOCK_ERRNO << endl << flush;
         return;
     }
 
-    if (withRetry(listen, listenSock, 1) == 1) {
-        std::cerr << "gdb socket listen failed: " << errno << endl << flush;
+    if (withRetry(listen, listenSock, 1) == -1) {
+        std::cerr << "gdb socket listen failed: " << SOCK_ERRNO << endl << flush;
         return;
     }
 
@@ -122,8 +162,8 @@ void GdbStub::Listen() {
 
 void GdbStub::Stop() {
     if (connectionState == ConnectionState::socketClosed) return;
-    close(listenSock);
-    close(connectionSock);
+    closeSocket(listenSock);
+    closeSocket(connectionSock);
 
     connectionState = ConnectionState::socketClosed;
 
@@ -178,13 +218,14 @@ void GdbStub::AcceptConnection(int timeout) {
 
     int acceptSock = withRetry(accept, listenSock, reinterpret_cast<sockaddr*>(&sa), &saLen);
     if (acceptSock == -1) {
-        if (errno != EWOULDBLOCK) std::cerr << "accept failed: " << errno << endl << flush;
+        if (SOCK_ERRNO != SOCK_EWOULDBLOCK)
+            std::cerr << "accept failed: " << SOCK_ERRNO << endl << flush;
         return;
     }
 
     if (!setSocketNonblock(acceptSock)) {
-        std::cerr << "failed to set socket nonblocking: " << errno << endl << flush;
-        close(acceptSock);
+        std::cerr << "failed to set socket nonblocking: " << SOCK_ERRNO << endl << flush;
+        closeSocket(acceptSock);
 
         return;
     }
@@ -208,10 +249,11 @@ void GdbStub::CheckForInterrupt(int timeout) {
     if (PollSocket(connectionSock, timeout) != SocketState::data) return;
 
     uint8 cmd;
-    ssize_t bytesRead = withRetry(recv, connectionSock, &cmd, 1, 0);
+    ssize_t bytesRead = withRetry(recv, connectionSock, (char*)&cmd, 1, 0);
 
     if (bytesRead != 1) {
-        std::cerr << "gdb stub: check for interrupt: failed to receive one byte: " << errno << endl
+        std::cerr << "gdb stub: check for interrupt: failed to receive one byte: " << SOCK_ERRNO
+                  << endl
                   << flush;
         Disconnect();
         return;
@@ -259,8 +301,8 @@ bool GdbStub::ReceivePacket(int timeout) {
 
         if (recvResult < 0) {
             // EAGAIN -> buffer is empty
-            if (errno != EAGAIN) {
-                std::cerr << "gdb stub: recv failed: " << errno << endl << flush;
+            if (SOCK_ERRNO != SOCK_EAGAIN) {
+                std::cerr << "gdb stub: recv failed: " << SOCK_ERRNO << endl << flush;
                 Disconnect();
             }
 
@@ -609,17 +651,21 @@ uint32 GdbStub::ReadHtoi(const char** input) {
 }
 
 GdbStub::SocketState GdbStub::PollSocket(int socket, int timeout) {
-    struct pollfd fds[] = {{.fd = socket, .events = POLLIN}};
+    struct pollfd fds[1];
+    fds[0].fd = socket;
+    fds[0].events = POLLIN;
+    fds[0].revents = 0;
+
     int pollResult = withRetry(poll, fds, 1, timeout);
 
     if (pollResult < 0) {
-        std::cerr << "gdb stub: poll failed: " << errno << endl << flush;
+        std::cerr << "gdb stub: poll failed: " << SOCK_ERRNO << endl << flush;
         return SocketState::none;
     }
 
-    if ((pollResult & POLLIN) == POLLIN) return SocketState::data;
+    if ((fds[0].revents & POLLIN) != 0) return SocketState::data;
 
-    if ((pollResult & POLLHUP) == POLLHUP) {
+    if ((fds[0].revents & POLLHUP) != 0) {
         Disconnect();
     }
 
@@ -629,7 +675,7 @@ GdbStub::SocketState GdbStub::PollSocket(int socket, int timeout) {
 void GdbStub::Disconnect() {
     std::cout << "debugger disconnected" << endl << flush;
 
-    close(connectionSock);
+    closeSocket(connectionSock);
 
     connectionState = ConnectionState::listening;
     runState = RunState::running;

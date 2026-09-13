@@ -23,7 +23,6 @@
 #include "charconv.h"
 
 #include <errno.h>
-#include <langinfo.h>
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,6 +31,7 @@
 
 #ifdef HAVE_ICONV
     #include <iconv.h>
+    #include <langinfo.h>
 #endif
 
 /* CP850 table for 0x80-0xFF range from:

@@ -7,7 +7,6 @@
 #ifdef __CYGWIN__
     #include <alloca.h>
 #endif
-
 using namespace std;
 
 Chunk::Chunk(size_t size, uint32_t* buffer) : chunkSize(size), buffer(buffer), next(buffer) {}

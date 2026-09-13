@@ -50,7 +50,7 @@ OBJECTS_EXTRA_NATIVE = ../common/libcommon.a
 OBJECTS_EXTRA_TEST = ../common/libcommon.a
 OBJECTS_EXTRA_EMCC = ../common/libcommon-wasm.a 
 
-BINARY_NATIVE = fstools
+BINARY_NATIVE = fstools$(EXE_SUFFIX)
 BINARY_EMCC = fstools_web.wasm
 
 include ../Makefile.common

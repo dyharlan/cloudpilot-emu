@@ -5,7 +5,7 @@ EmRegsMediaQ11xxPacifiC::EmRegsMediaQ11xxPacifiC(EmRegsFrameBuffer& framebuffer,
     : EmRegsMediaQ11xx(framebuffer, baseRegsAddr, baseVideoAddr) {}
 
 #define mq_addressof(x)                                                       \
-    (static_cast<emuptr>(((long)fRegs.x.GetPtr()) - ((long)fRegs.GetPtr())) + \
+    (static_cast<emuptr>(((uintptr_t)fRegs.x.GetPtr()) - ((uintptr_t)fRegs.GetPtr())) + \
      ((emuptr)this->GetAddressStart()))
 
 #define INSTALL_HANDLER(read, write, reg)                          \

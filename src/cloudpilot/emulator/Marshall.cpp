@@ -1,15 +1,15 @@
-#include "EmPalmStructs.h"
-#include "Marshal.h"
-#include "ROMStubs.h"
-
 #ifdef __linux__
     #include <arpa/inet.h>
-#endif
-
-#ifdef __CYGWIN__
+#elif defined(_WIN32)
+    #include <winsock2.h>
+#elif defined(__CYGWIN__)
     #include <arpa/inet.h>
     #include <netinet/in.h>
 #endif
+
+#include "EmPalmStructs.h"
+#include "Marshal.h"
+#include "ROMStubs.h"
 
 void Marshal::GetPointType(emuptr p, PointType& dest) {
     memset(&dest, 0, sizeof(PointType));
@@ -145,14 +145,14 @@ void Marshal::PutDlkServerSessionType(emuptr p, const DlkServerSessionType& src)
 
         dest.htalLibRefNum = src.htalLibRefNum;
         dest.maxHtalXferSize = src.maxHtalXferSize;
-        dest.eventProcP = (emuptr)(long)src.eventProcP;
+        dest.eventProcP = (emuptr)(uintptr_t)src.eventProcP;
         dest.eventRef = src.eventRef;
-        dest.canProcP = (emuptr)(long)src.canProcP;
+        dest.canProcP = (emuptr)(uintptr_t)src.canProcP;
         dest.canRef = src.canRef;
-        dest.condFilterH = (emuptr)(long)src.condFilterH;
+        dest.condFilterH = (emuptr)(uintptr_t)src.condFilterH;
         dest.dlkDBID = src.dlkDBID;
         dest.reserved1 = src.reserved1;
-        dest.dbR = (emuptr)(long)src.dbR;
+        dest.dbR = (emuptr)(uintptr_t)src.dbR;
         dest.cardNo = src.cardNo;
         dest.dbCreator = src.dbCreator;
         //	dest.dbName				= src.dbName;
@@ -174,8 +174,8 @@ void Marshal::PutDlkServerSessionType(emuptr p, const DlkServerSessionType& src)
         dest.cmdTID = src.cmdTID;
         dest.reserved2 = src.reserved2;
         dest.cmdLen = src.cmdLen;
-        dest.cmdP = (emuptr)(long)src.cmdP;
-        dest.cmdH = (emuptr)(long)src.cmdH;
+        dest.cmdP = (emuptr)(uintptr_t)src.cmdP;
+        dest.cmdH = (emuptr)(uintptr_t)src.cmdH;
         dest.wStateFlags = src.wStateFlags;
         //	dest.dbSearchState		= src.dbSearchState;
     }
@@ -224,101 +224,101 @@ void Marshal::GetEventType(emuptr p, EventType& dest) {
                 break;
 
             case winEnterEvent:
-                dest.data.winEnter.enterWindow = (WinHandle)(long)src.data.winEnter.enterWindow;
-                dest.data.winEnter.exitWindow = (WinHandle)(long)src.data.winEnter.exitWindow;
+                dest.data.winEnter.enterWindow = (WinHandle)(uintptr_t)src.data.winEnter.enterWindow;
+                dest.data.winEnter.exitWindow = (WinHandle)(uintptr_t)src.data.winEnter.exitWindow;
                 break;
 
             case winExitEvent:
-                dest.data.winExit.enterWindow = (WinHandle)(long)src.data.winExit.enterWindow;
-                dest.data.winExit.exitWindow = (WinHandle)(long)src.data.winExit.exitWindow;
+                dest.data.winExit.enterWindow = (WinHandle)(uintptr_t)src.data.winExit.enterWindow;
+                dest.data.winExit.exitWindow = (WinHandle)(uintptr_t)src.data.winExit.exitWindow;
                 break;
 
             case ctlEnterEvent:
                 dest.data.ctlEnter.controlID = src.data.ctlEnter.controlID;
-                dest.data.ctlEnter.pControl = (struct ControlType*)(long)src.data.ctlEnter.pControl;
+                dest.data.ctlEnter.pControl = (struct ControlType*)(uintptr_t)src.data.ctlEnter.pControl;
                 break;
 
             case ctlExitEvent:
                 dest.data.ctlExit.controlID = src.data.ctlExit.controlID;
-                dest.data.ctlExit.pControl = (struct ControlType*)(long)src.data.ctlExit.pControl;
+                dest.data.ctlExit.pControl = (struct ControlType*)(uintptr_t)src.data.ctlExit.pControl;
                 break;
 
             case ctlSelectEvent:
                 dest.data.ctlSelect.controlID = src.data.ctlSelect.controlID;
                 dest.data.ctlSelect.pControl =
-                    (struct ControlType*)(long)src.data.ctlSelect.pControl;
+                    (struct ControlType*)(uintptr_t)src.data.ctlSelect.pControl;
                 dest.data.ctlSelect.on = src.data.ctlSelect.on;
                 break;
 
             case ctlRepeatEvent:
                 dest.data.ctlRepeat.controlID = src.data.ctlRepeat.controlID;
                 dest.data.ctlRepeat.pControl =
-                    (struct ControlType*)(long)src.data.ctlRepeat.pControl;
+                    (struct ControlType*)(uintptr_t)src.data.ctlRepeat.pControl;
                 dest.data.ctlRepeat.time = src.data.ctlRepeat.time;
                 break;
 
             case lstEnterEvent:
                 dest.data.lstEnter.listID = src.data.lstEnter.listID;
-                dest.data.lstEnter.pList = (struct ListType*)(long)src.data.lstEnter.pList;
+                dest.data.lstEnter.pList = (struct ListType*)(uintptr_t)src.data.lstEnter.pList;
                 dest.data.lstEnter.selection = src.data.lstEnter.selection;
                 break;
 
             case lstSelectEvent:
                 dest.data.lstSelect.listID = src.data.lstSelect.listID;
-                dest.data.lstSelect.pList = (struct ListType*)(long)src.data.lstSelect.pList;
+                dest.data.lstSelect.pList = (struct ListType*)(uintptr_t)src.data.lstSelect.pList;
                 dest.data.lstSelect.selection = src.data.lstSelect.selection;
                 break;
 
             case lstExitEvent:
                 dest.data.lstExit.listID = src.data.lstExit.listID;
-                dest.data.lstExit.pList = (struct ListType*)(long)src.data.lstExit.pList;
+                dest.data.lstExit.pList = (struct ListType*)(uintptr_t)src.data.lstExit.pList;
                 break;
 
             case popSelectEvent:
                 dest.data.popSelect.controlID = src.data.popSelect.controlID;
                 dest.data.popSelect.controlP =
-                    (struct ControlType*)(long)src.data.popSelect.controlP;
+                    (struct ControlType*)(uintptr_t)src.data.popSelect.controlP;
                 dest.data.popSelect.listID = src.data.popSelect.listID;
-                dest.data.popSelect.listP = (struct ListType*)(long)src.data.popSelect.listP;
+                dest.data.popSelect.listP = (struct ListType*)(uintptr_t)src.data.popSelect.listP;
                 dest.data.popSelect.selection = src.data.popSelect.selection;
                 dest.data.popSelect.priorSelection = src.data.popSelect.priorSelection;
                 break;
 
             case fldEnterEvent:
                 dest.data.fldEnter.fieldID = src.data.fldEnter.fieldID;
-                dest.data.fldEnter.pField = (struct FieldType*)(long)src.data.fldEnter.pField;
+                dest.data.fldEnter.pField = (struct FieldType*)(uintptr_t)src.data.fldEnter.pField;
                 break;
 
             case fldHeightChangedEvent:
                 dest.data.fldHeightChanged.fieldID = src.data.fldHeightChanged.fieldID;
                 dest.data.fldHeightChanged.pField =
-                    (struct FieldType*)(long)src.data.fldHeightChanged.pField;
+                    (struct FieldType*)(uintptr_t)src.data.fldHeightChanged.pField;
                 dest.data.fldHeightChanged.newHeight = src.data.fldHeightChanged.newHeight;
                 dest.data.fldHeightChanged.currentPos = src.data.fldHeightChanged.currentPos;
                 break;
 
             case fldChangedEvent:
                 dest.data.fldChanged.fieldID = src.data.fldChanged.fieldID;
-                dest.data.fldChanged.pField = (struct FieldType*)(long)src.data.fldChanged.pField;
+                dest.data.fldChanged.pField = (struct FieldType*)(uintptr_t)src.data.fldChanged.pField;
                 break;
 
             case tblEnterEvent:
                 dest.data.tblEnter.tableID = src.data.tblEnter.tableID;
-                dest.data.tblEnter.pTable = (struct TableType*)(long)src.data.tblEnter.pTable;
+                dest.data.tblEnter.pTable = (struct TableType*)(uintptr_t)src.data.tblEnter.pTable;
                 dest.data.tblEnter.row = src.data.tblEnter.row;
                 dest.data.tblEnter.column = src.data.tblEnter.column;
                 break;
 
             case tblSelectEvent:
                 dest.data.tblEnter.tableID = src.data.tblEnter.tableID;
-                dest.data.tblEnter.pTable = (struct TableType*)(long)src.data.tblEnter.pTable;
+                dest.data.tblEnter.pTable = (struct TableType*)(uintptr_t)src.data.tblEnter.pTable;
                 dest.data.tblEnter.row = src.data.tblEnter.row;
                 dest.data.tblEnter.column = src.data.tblEnter.column;
                 break;
 
             case daySelectEvent:
                 dest.data.daySelect.pSelector =
-                    (struct DaySelectorType*)(long)src.data.daySelect.pSelector;
+                    (struct DaySelectorType*)(uintptr_t)src.data.daySelect.pSelector;
                 dest.data.daySelect.selection = src.data.daySelect.selection;
                 dest.data.daySelect.useThisDate = src.data.daySelect.useThisDate;
                 break;
@@ -369,7 +369,7 @@ void Marshal::GetEventType(emuptr p, EventType& dest) {
 
             case tblExitEvent:
                 dest.data.tblExit.tableID = src.data.tblExit.tableID;
-                dest.data.tblExit.pTable = (struct TableType*)(long)src.data.tblExit.pTable;
+                dest.data.tblExit.pTable = (struct TableType*)(uintptr_t)src.data.tblExit.pTable;
                 dest.data.tblExit.row = src.data.tblExit.row;
                 dest.data.tblExit.column = src.data.tblExit.column;
                 break;
@@ -377,13 +377,13 @@ void Marshal::GetEventType(emuptr p, EventType& dest) {
             case sclEnterEvent:
                 dest.data.sclEnter.scrollBarID = src.data.sclEnter.scrollBarID;
                 dest.data.sclEnter.pScrollBar =
-                    (struct ScrollBarType*)(long)src.data.sclEnter.pScrollBar;
+                    (struct ScrollBarType*)(uintptr_t)src.data.sclEnter.pScrollBar;
                 break;
 
             case sclExitEvent:
                 dest.data.sclExit.scrollBarID = src.data.sclExit.scrollBarID;
                 dest.data.sclExit.pScrollBar =
-                    (struct ScrollBarType*)(long)src.data.sclExit.pScrollBar;
+                    (struct ScrollBarType*)(uintptr_t)src.data.sclExit.pScrollBar;
                 dest.data.sclExit.value = src.data.sclExit.value;
                 dest.data.sclExit.newValue = src.data.sclExit.newValue;
                 break;
@@ -391,14 +391,14 @@ void Marshal::GetEventType(emuptr p, EventType& dest) {
             case sclRepeatEvent:
                 dest.data.sclRepeat.scrollBarID = src.data.sclRepeat.scrollBarID;
                 dest.data.sclRepeat.pScrollBar =
-                    (struct ScrollBarType*)(long)src.data.sclRepeat.pScrollBar;
+                    (struct ScrollBarType*)(uintptr_t)src.data.sclRepeat.pScrollBar;
                 dest.data.sclRepeat.value = src.data.sclRepeat.value;
                 dest.data.sclRepeat.newValue = src.data.sclRepeat.newValue;
                 dest.data.sclRepeat.time = src.data.sclRepeat.time;
                 break;
 
             case tsmConfirmEvent:
-                dest.data.tsmConfirm.yomiText = (Char*)(long)src.data.tsmConfirm.yomiText;
+                dest.data.tsmConfirm.yomiText = (Char*)(uintptr_t)src.data.tsmConfirm.yomiText;
                 dest.data.tsmConfirm.formID = src.data.tsmConfirm.formID;
                 break;
 
@@ -436,15 +436,15 @@ void Marshal::GetEventType(emuptr p, EventType& dest) {
             case frmGadgetEnterEvent:
                 dest.data.gadgetEnter.gadgetID = src.data.gadgetEnter.gadgetID;
                 dest.data.gadgetEnter.gadgetP =
-                    (struct FormGadgetType*)(long)src.data.gadgetEnter.gadgetP;
+                    (struct FormGadgetType*)(uintptr_t)src.data.gadgetEnter.gadgetP;
                 break;
 
             case frmGadgetMiscEvent:
                 dest.data.gadgetMisc.gadgetID = src.data.gadgetMisc.gadgetID;
                 dest.data.gadgetMisc.gadgetP =
-                    (struct FormGadgetType*)(long)src.data.gadgetMisc.gadgetP;
+                    (struct FormGadgetType*)(uintptr_t)src.data.gadgetMisc.gadgetP;
                 dest.data.gadgetMisc.selector = src.data.gadgetMisc.selector;
-                dest.data.gadgetMisc.dataP = (void*)(long)src.data.gadgetMisc.dataP;
+                dest.data.gadgetMisc.dataP = (void*)(uintptr_t)src.data.gadgetMisc.dataP;
                 break;
 
             default:
@@ -613,7 +613,7 @@ void Marshal::PutNetSocketAddrType(emuptr p, const NetSocketAddrType& s) {
 
                 dest.family = src.family;               // In HBO
                 dest.port = NetHToNS(ntohs(src.port));  // In NBO
-                dest.addr = NetHToNL(ntohl(src.addr));  // In NBO
+                dest.addr = (UInt32)NetHToNL(ntohl(src.addr));  // In NBO
 
                 break;
             }
@@ -754,7 +754,7 @@ void Marshal::PutNetHostInfoBufType(emuptr p, const NetHostInfoBufType& src) {
             // seems to work.
 
             EmAliasNetIPAddr<PAS> addr(destAddress);
-            addr = ntohl(**addrListP);
+            addr = (UInt32)ntohl(**addrListP);
 
             EmAliasemuptr<PAS> p(destAddressList);
             p = destAddress;

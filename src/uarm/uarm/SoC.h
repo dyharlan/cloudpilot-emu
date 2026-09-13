@@ -106,6 +106,7 @@ class SoC {
     virtual void OnSetPcmOutputEnabled() = 0;
     virtual void OnSetPcmSuspended() = 0;
     virtual void OnSdInsert() = 0;
+    virtual void OnSdRemount() = 0;
     virtual void OnSdEject() = 0;
 
    protected:

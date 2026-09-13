@@ -223,7 +223,7 @@ STATIC_INLINE uint16 EmMemDoGet16(void* a) { return *(uint16*)a; }
 
 STATIC_INLINE uint8 EmMemDoGet8(void* a) {
 #if WORDSWAP_MEMORY
-    return *(uint8*)((long)a ^ 1);
+    return *(uint8*)((uintptr_t)a ^ 1);
 #else
     return *(uint8*)a;
 #endif
@@ -254,7 +254,7 @@ STATIC_INLINE void EmMemDoPut16(void* a, uint16 v) { *(uint16*)a = v; }
 
 STATIC_INLINE void EmMemDoPut8(void* a, uint8 v) {
 #if WORDSWAP_MEMORY
-    *(uint8*)((long)a ^ 1) = v;
+    *(uint8*)((uintptr_t)a ^ 1) = v;
 #else
     *(uint8*)a = v;
 #endif

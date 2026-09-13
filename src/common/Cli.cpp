@@ -8,18 +8,14 @@
 #include <readline/history.h>
 // clang-format on
 
-#include <algorithm>
 #include <atomic>
 #include <condition_variable>
 #include <cstring>
 #include <deque>
-#include <functional>
 #include <iomanip>
 #include <iostream>
-#include <iterator>
 #include <memory>
 #include <mutex>
-#include <sstream>
 #include <thread>
 #include <unordered_map>
 #include <vector>
@@ -34,7 +30,7 @@ namespace {
 
     vector<cli::Command> commands;
     unordered_map<string, uint32_t> commandMap;
-    const cli::Command* command = nullptr;
+    atomic<const cli::Command*> command = nullptr;
     vector<string> arguments;
 
     mutex dispatchMutex;
@@ -475,7 +471,7 @@ namespace cli {
             unique_lock<mutex> lock(dispatchMutex);
             CommandEnvironmentImpl commandEnvironment(*command, quit);
 
-            command->cmd(arguments, commandEnvironment, context);
+            (*command).cmd(arguments, commandEnvironment, context);
             command = nullptr;
         };
 

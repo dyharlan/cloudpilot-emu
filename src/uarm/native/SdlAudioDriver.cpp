@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "MainLoop.h"
+#include "SDL_audio.h"
 #include "SoC.h"
 #include "audio_queue.h"
 
@@ -14,6 +15,12 @@ namespace {
 
 SdlAudioDriver::SdlAudioDriver(SoC* soc, AudioQueue* audioQueue)
     : soc(soc), audioQueue(audioQueue) {}
+
+SdlAudioDriver::~SdlAudioDriver() {
+    if (initialized) {
+        SDL_CloseAudioDevice(audioDevice);
+    }
+}
 
 void SdlAudioDriver::Start() {
     if (initialized) {
@@ -39,6 +46,7 @@ void SdlAudioDriver::Start() {
                                       SDL_AUDIO_ALLOW_SAMPLES_CHANGE);
     if (audioDevice == 0) {
         std::cout << "failed to open audio device" << std::endl;
+        return;
     } else {
         std::cout << "audio running, period size " << audioSpecActual.samples << std::endl;
     }

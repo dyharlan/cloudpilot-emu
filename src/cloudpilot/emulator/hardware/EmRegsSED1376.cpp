@@ -681,7 +681,7 @@ bool EmRegsSED1376PalmGeneric::CopyLCDFrame(Frame& frame, bool fullRefresh) {
             uint8* fbuf = framebuffer.GetRealAddress(baseAddr + frame.firstDirtyLine * rowBytes);
 
             for (uint32 y = frame.firstDirtyLine; y <= frame.lastDirtyLine; y++)
-                for (int32 x = 0; x < width; x++) *(buffer++) = lut[*(uint8*)((long)(fbuf++) ^ 1)];
+                for (int32 x = 0; x < width; x++) *(buffer++) = lut[*(uint8*)((uintptr_t)(fbuf++) ^ 1)];
 
             break;
         }
@@ -691,8 +691,8 @@ bool EmRegsSED1376PalmGeneric::CopyLCDFrame(Frame& frame, bool fullRefresh) {
 
             for (uint32 y = frame.firstDirtyLine; y <= frame.lastDirtyLine; y++)
                 for (int32 x = 0; x < width; x++) {
-                    uint8 p1 = *(uint8*)((long)(fbuf++) ^ 1);  // GGGBBBBB
-                    uint8 p2 = *(uint8*)((long)(fbuf++) ^ 1);  // RRRRRGGG
+                    uint8 p1 = *(uint8*)((uintptr_t)(fbuf++) ^ 1);  // GGGBBBBB
+                    uint8 p2 = *(uint8*)((uintptr_t)(fbuf++) ^ 1);  // RRRRRGGG
 
                     // Merge the two together so that we get RRRRRGGG GGGBBBBB
 

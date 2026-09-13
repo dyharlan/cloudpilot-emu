@@ -186,7 +186,9 @@ void recreateWindow(SDL_Window*& window, SDL_Renderer*& renderer, int& scale, bo
 
 void run(const Options& options) {
     srand(time(nullptr));
+#ifdef SIGPIPE
     signal(SIGPIPE, SIG_IGN);
+#endif
 
     setupCard(options);
 
@@ -244,7 +246,7 @@ void run(const Options& options) {
     IMG_Quit();
 }
 
-int main(int argc, const char** argv) {
+int main(int argc, char** argv) {
     class bad_device_id : public exception {};
 
     argparse::ArgumentParser program("cloudpilot-emu");
@@ -396,4 +398,6 @@ int main(int argc, const char** argv) {
 #endif
 
     run(options);
+
+    return 0;
 }

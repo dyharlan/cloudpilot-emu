@@ -11,8 +11,9 @@ import {
 import { Router } from '@angular/router';
 import helpUrl from '@assets/doc/sessions.md';
 import { isIOS, isIOSNative } from '@common/helper/browser';
-import { nandSize } from '@common/helper/deviceProperties';
+import { deviceDimensions, nandSize, selectableScreenSizes } from '@common/helper/deviceProperties';
 import { DeviceId } from '@common/model/DeviceId';
+import { ScreenSize } from '@common/model/Dimensions';
 import { SessionMetadata } from '@common/model/SessionMetadata';
 import { ModalController, PopoverController } from '@ionic/angular';
 
@@ -112,14 +113,29 @@ export class SessionsPage implements DragDropClient, OnInit {
 
         if (abort) return;
 
-        await this.loaderService.showWhile(() => this.sessionService.deleteSession(session), 'Deleting...');
+        await this.loaderService.showWhile(async () => {
+            if (this.emulationContext.session()?.id === session.id) {
+                await this.emulationService.stop();
+            }
+
+            await this.sessionService.deleteSession(session);
+        }, 'Deleting...');
     }
 
     @debounce()
     async editSession(session: Session): Promise<void> {
         const settings = settingsFromSession(session);
+        const screenSize = session.screenSize ?? deviceDimensions(session.device).screenSize;
 
-        if ((await this.editSettings(settings, session.device)) !== undefined) {
+        if (
+            (await this.editSettings(
+                settings,
+                session.device,
+                screenSize,
+                undefined,
+                selectableScreenSizes(session.device) !== undefined ? [screenSize] : undefined,
+            )) !== undefined
+        ) {
             await this.sessionService.updateSession(mergeSettings(session, settings));
         }
     }
@@ -358,7 +374,17 @@ export class SessionsPage implements DragDropClient, OnInit {
                 name: this.disambiguateSessionName(sessionImage.metadata?.name ?? file.name),
             };
 
-            if ((await this.editSettings(settings, sessionImage.deviceId)) !== undefined) {
+            const screenSize = sessionImage.screenSize ?? deviceDimensions(sessionImage.deviceId).screenSize;
+
+            if (
+                (await this.editSettings(
+                    settings,
+                    sessionImage.deviceId,
+                    screenSize,
+                    undefined,
+                    selectableScreenSizes(sessionImage.deviceId) !== undefined ? [screenSize] : undefined,
+                )) !== undefined
+            ) {
                 const session = await this.sessionService.addSessionFromImage(sessionImage, settings);
 
                 this.lastSessionTouched = session.id;
@@ -381,17 +407,28 @@ export class SessionsPage implements DragDropClient, OnInit {
                 name: this.disambiguateSessionName(file.name),
             };
 
-            const [device, nand] =
+            const screenSizes = selectableScreenSizes(romInfo.supportedDevices[0]);
+            const defaultDevice = romInfo.supportedDevices[0];
+
+            const [device, screenSize, nand] =
                 (await this.editSettings(
                     settings,
-                    romInfo.supportedDevices[0],
+                    defaultDevice,
+                    screenSizes !== undefined ? deviceDimensions(defaultDevice).screenSize : undefined,
                     romInfo.supportedDevices,
-                    nandSize(romInfo.supportedDevices[0]),
+                    screenSizes,
+                    nandSize(defaultDevice),
                     romInfo.engine === 'uarm' ? romInfo.needsNand : false,
                 )) ?? [];
 
             if (device !== undefined) {
-                const session = await this.sessionService.addSessionFromRom(content, device, settings, nand);
+                const session = await this.sessionService.addSessionFromRom(
+                    content,
+                    device,
+                    screenSize,
+                    settings,
+                    nand,
+                );
 
                 this.lastSessionTouched = session.id;
             }
@@ -401,10 +438,12 @@ export class SessionsPage implements DragDropClient, OnInit {
     private editSettings(
         settings: SessionSettings,
         device: DeviceId,
+        screenSize?: ScreenSize,
         availableDevices = [device],
+        availableScreenSizes?: Array<ScreenSize>,
         selectNandSize?: number,
         needsNand = false,
-    ): Promise<[DeviceId, Uint8Array | undefined] | undefined> {
+    ): Promise<[DeviceId, ScreenSize | undefined, Uint8Array | undefined] | undefined> {
         return new Promise((resolve) => {
             let modal: HTMLIonModalElement;
 
@@ -417,7 +456,13 @@ export class SessionsPage implements DragDropClient, OnInit {
                         availableDevices,
                         device,
                         selectNandSize,
-                        onSave: async (device: DeviceId, nand: Uint8Array | undefined) => {
+                        availableScreenSizes,
+                        screenSize,
+                        onSave: async (
+                            device: DeviceId,
+                            screenSize: ScreenSize | undefined,
+                            nand: Uint8Array | undefined,
+                        ) => {
                             if (
                                 needsNand &&
                                 selectNandSize !== undefined &&
@@ -428,7 +473,7 @@ export class SessionsPage implements DragDropClient, OnInit {
                             }
 
                             void modal.dismiss();
-                            resolve([device, nand]);
+                            resolve([device, screenSize, nand]);
                         },
                         onCancel: () => {
                             void modal.dismiss();

@@ -4,7 +4,7 @@ import { PrerenderedImage } from '@common/helper/image';
 import { GRAYSCALE_PALETTE_HEX } from '@common/helper/palette';
 import { DeviceId } from '@common/model/DeviceId';
 import { DeviceOrientation } from '@common/model/DeviceOrientation';
-import { ScreenSize } from '@common/model/Dimensions';
+import { ScreenSize, densityForScreenSize } from '@common/model/Dimensions';
 import { Event } from 'microevent.ts';
 
 import { SkinElement, SkinLoader } from './SkinLoader';
@@ -46,22 +46,19 @@ interface Layout {
 }
 
 function buttonHeightForScreenSize(screenSize: ScreenSize) {
-    switch (screenSize) {
-        case ScreenSize.screen320x480:
-        case ScreenSize.screen320x320:
-            return 60;
-
-        case ScreenSize.screen240x320:
-            return 45;
-
-        default:
-            return 30;
-    }
+    return 30 * densityForScreenSize(screenSize);
 }
 
-function calculateLayout(device: DeviceId, pixelRatio: number): Layout {
-    const dimensions = deviceDimensions(device);
-    const scale = (dimensions.screenSize === ScreenSize.screen160x160 ? 3 : 2) * pixelRatio;
+function scaleForDensity(density: number, pixelRatio: number): number {
+    if (density < 2) return 3;
+    if (density < 3) return 2;
+
+    return pixelRatio >>> 1 > 0 && pixelRatio % 2 === 0 ? 1.5 : 2;
+}
+
+function calculateLayout(device: DeviceId, screenSize: ScreenSize | undefined, pixelRatio: number): Layout {
+    const dimensions = deviceDimensions(device, screenSize);
+    const scale = scaleForDensity(densityForScreenSize(dimensions.screenSize), pixelRatio) * pixelRatio;
     const borderWidth: FrameDependent = { frameDevice: 1, frameCanvas: scale };
 
     const dist = (x: number): FrameDependent => ({ frameDevice: x, frameCanvas: x * scale });
@@ -288,7 +285,7 @@ export abstract class AbstractCanvasDisplayService {
         if (!canvas) return;
 
         this.dpad = dpad;
-        this.layout = calculateLayout(this.getDeviceId(), this.pixelRatio());
+        this.layout = calculateLayout(this.getDeviceId(), this.getScreenSize(), this.pixelRatio());
 
         this.onResize.dispatch();
 
@@ -487,6 +484,8 @@ export abstract class AbstractCanvasDisplayService {
     }
 
     protected abstract getDeviceId(): DeviceId;
+
+    protected abstract getScreenSize(): ScreenSize | undefined;
 
     protected abstract getOrientation(): DeviceOrientation;
 
@@ -759,7 +758,7 @@ export abstract class AbstractCanvasDisplayService {
     }
 
     protected ctx: CanvasRenderingContext2D | undefined;
-    protected layout = calculateLayout(DEFAULT_DEVICE, this.pixelRatio());
+    protected layout = calculateLayout(DEFAULT_DEVICE, undefined, this.pixelRatio());
     protected lastEmulationCanvas: HTMLCanvasElement | undefined;
     protected dpad = false;
 

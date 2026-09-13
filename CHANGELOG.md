@@ -1,7 +1,17 @@
 # Next version
 
+- Remove device orientation from session settings. Rotation still works from the
+  emulation menu.
+- Support for the paravirtualized rePalm OS5 platform. ROMs for this platform
+  run about 40% faster than ROMs for real hardware and support multiple screen
+  and memory sizes.
+- Fix a fatal error when deleting a running session with an attached SD card.
 - Work around Webkit bug that may cause audio delay after resuming from
   background.
+
+# Version 2.2.3
+
+- Fix export of SD cards attached to a running uARM instance.
 
 # Version 2.2.2
 

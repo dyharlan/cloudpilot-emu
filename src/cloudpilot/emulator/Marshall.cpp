@@ -224,7 +224,8 @@ void Marshal::GetEventType(emuptr p, EventType& dest) {
                 break;
 
             case winEnterEvent:
-                dest.data.winEnter.enterWindow = (WinHandle)(uintptr_t)src.data.winEnter.enterWindow;
+                dest.data.winEnter.enterWindow =
+                    (WinHandle)(uintptr_t)src.data.winEnter.enterWindow;
                 dest.data.winEnter.exitWindow = (WinHandle)(uintptr_t)src.data.winEnter.exitWindow;
                 break;
 
@@ -235,12 +236,14 @@ void Marshal::GetEventType(emuptr p, EventType& dest) {
 
             case ctlEnterEvent:
                 dest.data.ctlEnter.controlID = src.data.ctlEnter.controlID;
-                dest.data.ctlEnter.pControl = (struct ControlType*)(uintptr_t)src.data.ctlEnter.pControl;
+                dest.data.ctlEnter.pControl =
+                    (struct ControlType*)(uintptr_t)src.data.ctlEnter.pControl;
                 break;
 
             case ctlExitEvent:
                 dest.data.ctlExit.controlID = src.data.ctlExit.controlID;
-                dest.data.ctlExit.pControl = (struct ControlType*)(uintptr_t)src.data.ctlExit.pControl;
+                dest.data.ctlExit.pControl =
+                    (struct ControlType*)(uintptr_t)src.data.ctlExit.pControl;
                 break;
 
             case ctlSelectEvent:
@@ -299,7 +302,8 @@ void Marshal::GetEventType(emuptr p, EventType& dest) {
 
             case fldChangedEvent:
                 dest.data.fldChanged.fieldID = src.data.fldChanged.fieldID;
-                dest.data.fldChanged.pField = (struct FieldType*)(uintptr_t)src.data.fldChanged.pField;
+                dest.data.fldChanged.pField =
+                    (struct FieldType*)(uintptr_t)src.data.fldChanged.pField;
                 break;
 
             case tblEnterEvent:
@@ -611,8 +615,8 @@ void Marshal::PutNetSocketAddrType(emuptr p, const NetSocketAddrType& s) {
                 EmAliasNetSocketAddrINType<PAS> dest(p);
                 NetSocketAddrINType& src = (NetSocketAddrINType&)s;
 
-                dest.family = src.family;               // In HBO
-                dest.port = NetHToNS(ntohs(src.port));  // In NBO
+                dest.family = src.family;                       // In HBO
+                dest.port = NetHToNS(ntohs(src.port));          // In NBO
                 dest.addr = (UInt32)NetHToNL(ntohl(src.addr));  // In NBO
 
                 break;

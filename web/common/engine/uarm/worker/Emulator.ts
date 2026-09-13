@@ -2,7 +2,9 @@ import { DbInstallResult, PalmButton } from '@common/bridge/Cloudpilot';
 import { BackupState, Uarm } from '@common/bridge/Uarm';
 import { BackupResult, FullState } from '@common/engine/Engine';
 import { EngineSettings } from '@common/engine/EngineSettings';
+import { uarmRamSizeFromMemorySize } from '@common/helper/ramSize';
 import { DeviceId } from '@common/model/DeviceId';
+import { ScreenSize } from '@common/model/Dimensions';
 import {
     StreamMessageClient,
     StreamMessageClientType,
@@ -34,18 +36,6 @@ const MAX_PCM_SUSPEND_MSEC = 500;
 const MAX_PCM_BUFFERS_IN_FLIGHT = 5;
 const MAX_PCM_WAIT_FOR_BUFFER_MSEC = 5000;
 
-/*
- * Determine RAM size in MB from memory size. This exploits the fact that RAM
- * size is always a power-of-two multiple of 1MB, and memory size is only a
- * a few (16) kilobtes of extra memory.
- */
-function ramSizeFromMemorySize(memorySize: number): number | undefined {
-    if (memorySize === 0) return undefined;
-    const log2 = 31 - Math.clz32(memorySize);
-
-    return log2 > 20 ? log2 - 20 : undefined;
-}
-
 export class Emulator {
     constructor(
         private uarm: Uarm,
@@ -61,21 +51,16 @@ export class Emulator {
 
     openSession(
         rom: Uint8Array,
+        screenSize: ScreenSize,
         nand?: Uint8Array,
         memory?: Uint8Array,
         state?: Uint8Array,
         card?: [Uint8Array, string],
     ): boolean {
         let ramSize: number | undefined = undefined;
-        if (memory) {
-            ramSize = ramSizeFromMemorySize(memory.length);
+        if (memory) ramSize = uarmRamSizeFromMemorySize(memory.length);
 
-            if (ramSize === undefined) {
-                console.error(`unable to determine RAM size from memory size ${memory.length} bytes`);
-                return false;
-            }
-        }
-
+        this.uarm.setScreenSize(screenSize);
         if (ramSize !== undefined) this.uarm.setRamSize(ramSize);
         if (nand) this.uarm.setNand(nand);
         if (memory) this.uarm.setMemory(memory);
@@ -281,7 +266,7 @@ export class Emulator {
     getSdCardData(): Uint32Array | undefined {
         const data = this.uarm.getSdCardData();
 
-        return data ? new Uint32Array(data.buffer, data.byteOffset, data.byteLength).slice() : undefined;
+        return data ? new Uint32Array(data.buffer, data.byteOffset, data.byteLength >>> 2).slice() : undefined;
     }
 
     getFullState(): FullState {
@@ -501,8 +486,7 @@ export class Emulator {
     }
 
     private getFrame(): ArrayBuffer | undefined {
-        // CSTODO: resolution fudge
-        const frame = this.uarm.getFrame(this.deviceId === DeviceId.te2 ? 320 : 480);
+        const frame = this.uarm.getFrame();
         if (!frame) return undefined;
 
         let buffer: ArrayBuffer;

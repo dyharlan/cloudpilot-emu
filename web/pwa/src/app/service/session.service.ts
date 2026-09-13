@@ -2,6 +2,7 @@ import { Injectable, Signal, signal } from '@angular/core';
 import { SessionImage } from '@common/bridge/Cloudpilot';
 import { engineType, nandSize } from '@common/helper/deviceProperties';
 import { DeviceId } from '@common/model/DeviceId';
+import { ScreenSize } from '@common/model/Dimensions';
 import { SessionMetadata } from '@common/model/SessionMetadata';
 import { ZipfileWalkerState } from '@native/cloudpilot_web';
 import { Mutex } from 'async-mutex';
@@ -126,6 +127,7 @@ export class SessionService {
     async addSessionFromRom(
         rom: Uint8Array,
         device: DeviceId,
+        screenSize: ScreenSize | undefined,
         settings: SessionSettings,
         nand?: Uint8Array,
     ): Promise<Session> {
@@ -138,6 +140,7 @@ export class SessionService {
             ...settings,
             id: -1,
             device,
+            screenSize,
             ram: (await this.nativeSupportService.ramSizeForDevice(device, rom)) >>> 20,
             rom: '',
             wasResetForcefully: false,
@@ -222,7 +225,9 @@ export class SessionService {
             async () => {
                 const sessionImage: Omit<SessionImage<SessionMetadata>, 'version'> = {
                     engine: session.engine,
+                    ramSize: session.ram << 20,
                     deviceId: session.device,
+                    screenSize: session.screenSize,
                     metadata: metadataForSession(session),
                     rom,
                     memory,
@@ -251,7 +256,9 @@ export class SessionService {
 
         const sessionImage: Omit<SessionImage<SessionMetadata>, 'version'> = {
             engine: session.engine,
+            ramSize: session.ram << 20,
             deviceId: session.device,
+            screenSize: session.screenSize,
             metadata: metadataForSession(session),
             rom,
             memory,
@@ -280,7 +287,8 @@ export class SessionService {
             ...settings,
             id: -1,
             device: image.deviceId,
-            ram: await this.getRamSizeForSession(image),
+            screenSize: image.screenSize,
+            ram: image.ramSize >>> 20,
             rom: '',
             osVersion: image?.metadata?.osVersion,
             wasResetForcefully: false,
@@ -296,14 +304,6 @@ export class SessionService {
         await this.updateSessionsFromStorage();
 
         return savedSession;
-    }
-
-    private async getRamSizeForSession(image: SessionImage<unknown>): Promise<number> {
-        if (image.engine === 'uarm' && image.memory) {
-            return image.memory?.length >= 32 << 20 ? 32 : 16;
-        }
-
-        return (await this.nativeSupportService.ramSizeForDevice(image.deviceId, image.rom)) >>> 20;
     }
 
     readonly _sessions = signal<Array<Session>>([]);

@@ -58,6 +58,8 @@ bool SocGeneric<T>::ExecuteInjected(uint64_t maxCycles, uint64_t cyclesPerSecond
 
 template <class T>
 void SocGeneric<T>::Reset() {
+    SoC::Reset();
+
     const bool pcmOutputEnabled = pcmEnabled;
     const bool cardInserted = this->cardInserted;
     const uint64_t accumulatedTime = scheduler->GetTime();
@@ -152,7 +154,9 @@ void SocGeneric<T>::Save(U& savestate) {
 template <class T>
 template <typename U>
 void SocGeneric<T>::DoSaveLoad(U& chunkHelper, uint32_t version) {
-    chunkHelper.Do(typename U::BoolPack() << cardInserted << pcmEnabled << sleeping)
+    bool pcmEnabledDummy = pcmEnabled;
+
+    chunkHelper.Do(typename U::BoolPack() << cardInserted << pcmEnabledDummy << sleeping)
         .DoBuffer(cardId, sizeof(cardId));
 
     uint64_t cyclesTotal = 0;

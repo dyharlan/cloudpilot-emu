@@ -6,6 +6,7 @@
 #include "Nibbler.h"
 #include "RAM.h"
 #include "ROM.h"
+#include "SoC.h"
 #include "cputil.h"
 #include "mem.h"
 #include "memory_buffer.h"
@@ -28,7 +29,6 @@ struct PvDisplay {
     uint32_t stride{0};
 
     uint8_t depth{0};
-    bool dirty{true};
 
     uint32_t width;
     uint32_t height;
@@ -37,6 +37,7 @@ struct PvDisplay {
     MemoryBuffer* bufferClut{nullptr};
     ArmRam* ram{nullptr};
     ArmRom* rom{nullptr};
+    SoC* soc{nullptr};
 
     template <typename T>
     void DoSaveLoad(T& chunkHelper) {
@@ -78,7 +79,7 @@ static bool pvDisplayPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t siz
         case DISPLAY_OFFSET_BASE >> 2:
             if (write) {
                 display->base = value & ~0x03;
-                display->dirty = true;
+                display->soc->SetFramebufferDirty();
                 updateFramebufferLocation(display);
             } else {
                 value = display->base;
@@ -89,7 +90,7 @@ static bool pvDisplayPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t siz
         case (DISPLAY_OFFSET_STRIDE >> 2):
             if (write) {
                 display->stride = value & ~0x03;
-                display->dirty = true;
+                display->soc->SetFramebufferDirty();
                 updateFramebufferLocation(display);
 
             } else {
@@ -102,7 +103,7 @@ static bool pvDisplayPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t siz
             if (write) {
                 if (value <= 4) {
                     display->depth = value;
-                    display->dirty = true;
+                    display->soc->SetFramebufferDirty();
                 } else {
                     fprintf(stderr, "invalid display depth %u\n", value);
                     return false;
@@ -121,6 +122,8 @@ static bool pvDisplayPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t siz
 
             clut[index] = bswap32((value << 8) | 0xff);
             MEMORY_BUFFER_MARK_DIRTY(*(display->bufferClut), index << 2);
+
+            display->soc->SetFramebufferDirty();
 
             break;
         }
@@ -141,7 +144,28 @@ static bool pvDisplayPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t siz
     return true;
 }
 
-PvDisplay* pvDisplayInit(ArmMem* mem, ArmRam* ram, ArmRom* rom, MemoryBuffer* bufferClut,
+static uint32_t pvDisplayLineForAddress(PvDisplay* display, uint32_t address) {
+    if (address < display->base) return 0;
+
+    const uint32_t line = (address - display->base) / display->stride;
+
+    return line < display->height ? line : display->height - 1;
+}
+
+static uint8_t* pvResolveFramebuffer(PvDisplay* display, uint32_t firstDirtyLine,
+                                     uint32_t lastDirtyLine) {
+    const uint32_t base = display->base + firstDirtyLine * display->stride;
+    const uint32_t size = (lastDirtyLine - firstDirtyLine + 1) * display->stride;
+
+    auto framebuffer = reinterpret_cast<uint8_t*>(ramResolveAddress(display->ram, base, size));
+
+    if (!framebuffer)
+        framebuffer = reinterpret_cast<uint8_t*>(romResolveAddress(display->rom, base, size));
+
+    return framebuffer;
+}
+
+PvDisplay* pvDisplayInit(ArmMem* mem, ArmRam* ram, ArmRom* rom, SoC* soc, MemoryBuffer* bufferClut,
                          uint32_t width, uint32_t height, uint32_t density) {
     auto display = new PvDisplay();
 
@@ -151,6 +175,7 @@ PvDisplay* pvDisplayInit(ArmMem* mem, ArmRam* ram, ArmRom* rom, MemoryBuffer* bu
 
     display->ram = ram;
     display->rom = rom;
+    display->soc = soc;
     display->bufferClut = bufferClut;
 
     memRegionAdd(mem, DISPLAY_BASE, DISPLAY_SIZE, pvDisplayPrvMemAccessF, display);
@@ -159,16 +184,9 @@ PvDisplay* pvDisplayInit(ArmMem* mem, ArmRam* ram, ArmRom* rom, MemoryBuffer* bu
 }
 
 template <int bpp>
-static bool pvDisplayRenderFramebufferIndexed(PvDisplay* display, uint32_t* target) {
-    const size_t framebufferSize = display->stride * display->height;
-
-    auto framebuffer =
-        reinterpret_cast<uint8_t*>(ramResolveAddress(display->ram, display->base, framebufferSize));
-
-    if (!framebuffer)
-        framebuffer = reinterpret_cast<uint8_t*>(
-            romResolveAddress(display->rom, display->base, framebufferSize));
-
+static bool pvDisplayRenderFramebufferIndexed(PvDisplay* display, uint32_t* target,
+                                              uint32_t firstDirtyLine, uint32_t lastDirtyLine) {
+    auto framebuffer = pvResolveFramebuffer(display, firstDirtyLine, lastDirtyLine);
     if (!framebuffer) return false;
 
     const auto clut = reinterpret_cast<uint32_t*>(display->bufferClut->buffer);
@@ -183,7 +201,7 @@ static bool pvDisplayRenderFramebufferIndexed(PvDisplay* display, uint32_t* targ
         nibbler.reset(framebuffer, 0);
     }
 
-    for (uint32_t y = 0; y < display->height; y++) {
+    for (uint32_t y = firstDirtyLine; y <= lastDirtyLine; y++) {
         for (uint32_t x = 0; x < display->width; x++) {
             if constexpr (bpp != 8) {
                 *(target++) = clut[nibbler.nibble()];
@@ -202,21 +220,35 @@ static bool pvDisplayRenderFramebufferIndexed(PvDisplay* display, uint32_t* targ
     return true;
 }
 
-bool pvDisplayRenderFramebuffer(PvDisplay* display, uint32_t* target) {
-    if (display->base == 0 || display->stride == 0) return false;
+bool pvDisplayRenderFramebuffer(PvDisplay* display, uint32_t* target, uint32_t lowWatermark,
+                                uint32_t highWatermark, uint32_t& firstDirtyLine,
+                                uint32_t& lastDirtyLine) {
+    if (display->base == 0 || display->stride == 0 || lowWatermark > highWatermark) {
+        firstDirtyLine = lastDirtyLine = 0;
+        return false;
+    }
+
+    firstDirtyLine = pvDisplayLineForAddress(display, lowWatermark);
+    lastDirtyLine = pvDisplayLineForAddress(display, highWatermark);
+
+    target += firstDirtyLine * display->width;
 
     switch (display->depth) {
         case 0:
-            return pvDisplayRenderFramebufferIndexed<1>(display, target);
+            return pvDisplayRenderFramebufferIndexed<1>(display, target, firstDirtyLine,
+                                                        lastDirtyLine);
 
         case 1:
-            return pvDisplayRenderFramebufferIndexed<2>(display, target);
+            return pvDisplayRenderFramebufferIndexed<2>(display, target, firstDirtyLine,
+                                                        lastDirtyLine);
 
         case 2:
-            return pvDisplayRenderFramebufferIndexed<4>(display, target);
+            return pvDisplayRenderFramebufferIndexed<4>(display, target, firstDirtyLine,
+                                                        lastDirtyLine);
 
         case 3:
-            return pvDisplayRenderFramebufferIndexed<8>(display, target);
+            return pvDisplayRenderFramebufferIndexed<8>(display, target, firstDirtyLine,
+                                                        lastDirtyLine);
 
         case 4: {
             const uint32_t lineBytes = display->width << 1;
@@ -225,10 +257,10 @@ bool pvDisplayRenderFramebuffer(PvDisplay* display, uint32_t* target) {
             const uint32_t pitchDelta = (display->stride - lineBytes) >> 1;
 
             auto framebuffer = reinterpret_cast<uint16_t*>(
-                ramResolveAddress(display->ram, display->base, display->stride * display->height));
+                pvResolveFramebuffer(display, firstDirtyLine, lastDirtyLine));
             if (!framebuffer) return false;
 
-            for (uint32_t y = 0; y < display->height; y++) {
+            for (uint32_t y = firstDirtyLine; y <= lastDirtyLine; y++) {
                 for (uint32_t x = 0; x < display->width; x++) {
                     *(target++) = unpack_rgb16(*(framebuffer++));
                 }
@@ -245,10 +277,6 @@ bool pvDisplayRenderFramebuffer(PvDisplay* display, uint32_t* target) {
 
     return true;
 }
-
-bool pvIsDirty(PvDisplay* display) { return display->dirty; }
-
-void pvDisplayClearDirty(PvDisplay* display) { display->dirty = false; }
 
 template <typename T>
 void pvDisplaySave(struct PvDisplay* display, T& savestate) {

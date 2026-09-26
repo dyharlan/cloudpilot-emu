@@ -44,7 +44,7 @@ class SocPXA : public SocGeneric<SocPXA> {
     SocPXA(enum DeviceType5 deviceType, uint32_t ramSize, void *romData, const uint32_t romSize,
            uint8_t *nandContent, size_t nandSize, int gdbPort, uint_fast8_t socRev);
 
-    uint32_t *GetPendingFrame() override;
+    uint32_t *GetPendingFrame(uint32_t &firstDirtyLine, uint32_t &lastDirtyLine) override;
     void ResetPendingFrame() override;
     DeviceType5 GetDeviceType() override;
     DisplayMode GetDisplayMode() override;
@@ -80,6 +80,8 @@ class SocPXA : public SocGeneric<SocPXA> {
 
     void CycleBatch0();
     bool Batch0Required();
+
+    void UpdateSchedulePcm();
 
     static void RescheduleCB(void *ctx, uint32_t task);
     static uint64_t GetTimeCB(void *ctx);

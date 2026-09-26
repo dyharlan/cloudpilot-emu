@@ -200,6 +200,7 @@ export class EngineUarmImpl implements EngineUarm {
         rom: Uint8Array,
         device: DeviceId,
         screenSize: ScreenSize | undefined,
+        ramSize: number,
         nand?: Uint8Array,
         memory?: Uint8Array,
         state?: Uint8Array,
@@ -220,7 +221,7 @@ export class EngineUarmImpl implements EngineUarm {
         if (
             !(await this.rpcHost.call(
                 'openSession',
-                { rom, screenSize: this.dimensions.screenSize, nand, memory, state, card },
+                { rom, screenSize: this.dimensions.screenSize, ramSize, nand, memory, state, card },
                 [
                     rom.buffer,
                     nand?.buffer,
@@ -282,9 +283,19 @@ export class EngineUarmImpl implements EngineUarm {
     blitFrame(canvas: HTMLCanvasElement): void {
         if (!this.pendingFrame || !this.dimensions) return;
 
-        const imageData = new ImageData(new Uint8ClampedArray(this.pendingFrame), this.dimensions?.width);
+        const imageData = new ImageData(new Uint8ClampedArray(this.pendingFrame), this.dimensions.width);
 
-        canvas.getContext('2d')?.putImageData(imageData, 0, 0);
+        canvas
+            .getContext('2d')
+            ?.putImageData(
+                imageData,
+                0,
+                this.firstDirtyLine,
+                0,
+                0,
+                this.dimensions.width,
+                this.lastDirtyLine - this.firstDirtyLine + 1,
+            );
 
         this.returnPendingFrame();
     }
@@ -423,6 +434,8 @@ export class EngineUarmImpl implements EngineUarm {
                 if (message.frame && message.lcdEnabled) {
                     this.returnPendingFrame();
                     this.pendingFrame = message.frame;
+                    this.firstDirtyLine = message.firstDirtyLine;
+                    this.lastDirtyLine = message.lastDirtyLine;
 
                     this.newFrameEvent.dispatch();
                 } else if (!message.lcdEnabled && (lcdWasEnabled ?? true)) {
@@ -478,6 +491,8 @@ export class EngineUarmImpl implements EngineUarm {
     private currentIpsMax = 0;
 
     private pendingFrame: ArrayBuffer | undefined;
+    private firstDirtyLine = 0;
+    private lastDirtyLine = 0;
 
     private card: Card = { state: CardState.none };
 

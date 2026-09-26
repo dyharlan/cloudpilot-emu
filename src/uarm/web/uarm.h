@@ -33,6 +33,8 @@ class Uarm {
     double Cycle(uint64_t now);
 
     void* GetFrame();
+    uint32_t GetFirstDirtyLine();
+    uint32_t GetLastDirtyLine();
     uint32_t GetFrameSize();
     void ResetFrame();
 
@@ -123,6 +125,9 @@ class Uarm {
     size_t sdSize{0};
     uint8_t* sdData{nullptr};
     std::string sdId;
+
+    uint32_t firstDirtyLine{0};
+    uint32_t lastDirtyLine{0};
 
     uint32_t defaultMips{0};
     DeviceType5 deviceType{DeviceType5::deviceTypeInvalid};

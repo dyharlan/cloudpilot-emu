@@ -4,9 +4,11 @@
 #include <cstring>
 #include <ctime>
 
-long Platform::GetMilliseconds() {
+#include "EmTypes.h"
+
+uint64 Platform::GetMilliseconds() {
     return chrono::duration_cast<chrono::milliseconds>(
-               chrono::system_clock::now().time_since_epoch())
+               chrono::steady_clock::now().time_since_epoch())
         .count();
 }
 

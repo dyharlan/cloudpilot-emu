@@ -17,12 +17,13 @@ constexpr uint32 BACKGROUND_HUE = 0xd2;
 constexpr uint32 FOREGROUND_COLOR = 0xff000000;
 constexpr uint32 BACKGROUND_COLOR =
     0xff000000 | BACKGROUND_HUE | (BACKGROUND_HUE << 8) | (BACKGROUND_HUE << 16);
+constexpr uint32 FLUSH_PIPELNE_FRAMES = 3;
 
 constexpr uint32 PALETTE_GRAYSCALE_16[] = {
     0xffd2d2d2, 0xffc4c4c4, 0xffb6b6b6, 0xffa8a8a8, 0xff9a9a9a, 0xff8c8c8c, 0xff7e7e7e, 0xff707070,
     0xff626262, 0xff545454, 0xff464646, 0xff383838, 0xff2a2a2a, 0xff1c1c1c, 0xff0e0e0e, 0xff000000};
 
-constexpr long SCREEN_REFRESH_GRACE_TIME = 10;
+constexpr uint64 SCREEN_REFRESH_GRACE_TIME = 10;
 
 MainLoop::MainLoop(SDL_Window* window, SDL_Renderer* renderer, int scale)
     : renderer(renderer),
@@ -54,11 +55,11 @@ MainLoop::~MainLoop() {
 bool MainLoop::IsRunning() const { return !eventHandler.IsQuit(); }
 
 void MainLoop::Cycle() {
-    const long millis = Platform::GetMilliseconds();
+    const uint64 millis = Platform::GetMilliseconds();
     const uint32 clocksPerSecond = gSession->GetClocksPerSecond();
 
     if (!gDebugger.IsStopped()) {
-        if (millis - millisOffset - static_cast<long>(clockEmu) > 500)
+        if (millis - millisOffset - static_cast<uint64>(clockEmu) > 500)
             clockEmu = millis - millisOffset - 10;
 
         const long cycles = static_cast<long>(
@@ -68,7 +69,7 @@ void MainLoop::Cycle() {
             long cyclesPassed = 0;
 
             while (cyclesPassed < cycles && !gDebugger.IsStopped())
-                cyclesPassed += gSession->RunEmulation(cycles);
+                cyclesPassed += gSession->RunEmulation(cycles - cyclesPassed);
             clockEmu +=
                 static_cast<double>(cyclesPassed) / (static_cast<double>(clocksPerSecond) / 1000.);
         }
@@ -77,11 +78,16 @@ void MainLoop::Cycle() {
     }
 
     const bool screenUpdateRequired = eventHandler.HandleEvents(millis);
-    if (gSystemState.IsScreenDirty() || screenUpdateRequired) {
+    if (gSystemState.IsScreenDirty() || screenUpdateRequired ||
+        flushPipelineCounter++ < FLUSH_PIPELNE_FRAMES) {
+        if (gSystemState.IsScreenDirty() || screenUpdateRequired) flushPipelineCounter = 0;
+
         UpdateScreen(false);
         gSystemState.MarkScreenClean();
-    } else if (!SuspendManager::IsSuspended() && !gDebugger.IsStopped() && !gDebugger.IsStepping())
+    } else if (!SuspendManager::IsSuspended() && !gDebugger.IsStopped() &&
+               !gDebugger.IsStepping()) {
         SDL_Delay(16);
+    }
 }
 
 void MainLoop::LoadSilkscreen() {
@@ -213,7 +219,7 @@ void MainLoop::UpdateScreen(bool fullRedraw) {
 
     DrawSilkscreen(renderer);
 
-    const long timestamp = Platform::GetMilliseconds();
+    const uint64 timestamp = Platform::GetMilliseconds();
     if (timestamp - lastScreenRefreshAt < SCREEN_REFRESH_GRACE_TIME) {
         SDL_Delay(SCREEN_REFRESH_GRACE_TIME - timestamp + lastScreenRefreshAt);
     }
